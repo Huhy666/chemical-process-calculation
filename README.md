@@ -58,6 +58,8 @@ python -m http.server 8601 --directory docs
 2. 也可以把 `docs/index.html` 中的 `<video>` 替换为 B 站 / 腾讯视频 iframe；
 3. 重新部署 `docs/` 目录即可生效。
 
+> 本地演示视频文件已加入 `.gitignore`，避免大文件进入 Git 历史；部署静态站时直接上传整个 `docs/` 目录即可包含视频。
+
 ## 工作流程
 
 ```text

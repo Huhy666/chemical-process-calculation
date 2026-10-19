@@ -7,3 +7,4 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 .streamlit/
+docs/assets/demo-video.mp4
