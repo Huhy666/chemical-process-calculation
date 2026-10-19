@@ -18,9 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://huhy666.github.io/chemical-process-calculation/"><b>🌐 在线项目介绍页</b></a>
-  ·
-  <a href="https://huhy666.github.io/chemical-process-calculation/#video"><b>▶ 演示视频</b></a>
+  <b>独立项目介绍页：<code>docs/index.html</code></b>
   ·
   <a href="https://github.com/Huhy666/chemical-process-calculation"><b>💻 源码</b></a>
 </p>
@@ -42,19 +40,23 @@
 
 ---
 
-## 项目介绍页与演示视频
+## 独立项目介绍页与演示视频
 
-面向非技术读者的项目介绍页部署在 GitHub Pages：
+面向非技术读者的独立静态介绍页位于 `docs/index.html`，不依赖 Streamlit，也不依赖 GitHub Pages。
+它可以用任意静态托管方式发布：Netlify、Cloudflare Pages、Nginx、本地 HTTP 服务或内网穿透隧道。
 
-**<https://huhy666.github.io/chemical-process-calculation/>**
+本地预览：
 
-页面包含项目背景、价值对比、工作流程、架构图、真实案例、技术栈与启动方式，并预留了演示视频位置。
+```bash
+python -m http.server 8601 --directory docs
+# 打开 http://127.0.0.1:8601
+```
 
 上传演示视频：
 
-1. 把 MP4 文件放到 `docs/assets/demo-video.mp4`（文件名保持一致即可自动播放）；
+1. 把 MP4 文件放到 `docs/assets/demo-video.mp4`（文件名一致即可自动播放）；
 2. 也可以把 `docs/index.html` 中的 `<video>` 替换为 B 站 / 腾讯视频 iframe；
-3. 提交并推送后，GitHub Actions 会自动重新部署介绍页。
+3. 重新部署 `docs/` 目录即可生效。
 
 ## 工作流程
 
