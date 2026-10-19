@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="系统架构图">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <linearGradient id="ui" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eff6ff"/><stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="api" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ecfdf5"/><stop offset="100%" stop-color="#d1fae5"/>
+    </linearGradient>
+    <linearGradient id="agent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#faf5ff"/><stop offset="100%" stop-color="#f3e8ff"/>
+    </linearGradient>
+    <linearGradient id="tool" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff7ed"/><stop offset="100%" stop-color="#ffedd5"/>
+    </linearGradient>
+    <linearGradient id="db" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="600" y="52" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif"
+        font-size="30" font-weight="700" fill="#0f172a">Plan &amp; Execute 架构</text>
+  <text x="600" y="86" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif"
+        font-size="16" fill="#64748b">LLM 只做规划与总结，每一步数值计算都由确定性工具完成</text>
+
+  <!-- UI -->
+  <rect x="60" y="120" width="300" height="96" rx="14" fill="url(#ui)" stroke="#93c5fd" filter="url(#shadow)"/>
+  <text x="84" y="154" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#1e3a8a">Streamlit UI</text>
+  <text x="84" y="184" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#334155">计划卡片 · 审批按钮 · 步骤时间线 · 报告</text>
+
+  <!-- Arrow UI -> API -->
+  <line x1="210" y1="216" x2="210" y2="266" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="224" y="246" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="13" fill="#64748b">HTTP + 轮询</text>
+
+  <!-- FastAPI -->
+  <rect x="60" y="270" width="300" height="96" rx="14" fill="url(#api)" stroke="#6ee7b7" filter="url(#shadow)"/>
+  <text x="84" y="304" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#065f46">FastAPI</text>
+  <text x="84" y="334" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#334155">创建运行 · 审批 · 查询详情 · 事件增量</text>
+
+  <!-- Arrow API -> Graph -->
+  <line x1="360" y1="318" x2="430" y2="318" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="365" y="305" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="13" fill="#64748b">后台任务</text>
+
+  <!-- LangGraph group -->
+  <rect x="434" y="118" width="706" height="270" rx="18" fill="url(#agent)" stroke="#c4b5fd" filter="url(#shadow)"/>
+  <text x="458" y="150" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" font-weight="700" fill="#6d28d9">LangGraph 状态机</text>
+
+  <g font-family="Arial, 'Microsoft YaHei', sans-serif">
+    <rect x="460" y="176" width="150" height="74" rx="11" fill="#ffffff" stroke="#a78bfa"/>
+    <text x="535" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="#4c1d95">Planner</text>
+    <text x="535" y="232" text-anchor="middle" font-size="12" fill="#64748b">生成结构化计划</text>
+
+    <rect x="648" y="176" width="150" height="74" rx="11" fill="#ffffff" stroke="#a78bfa"/>
+    <text x="723" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="#4c1d95">Approval</text>
+    <text x="723" y="232" text-anchor="middle" font-size="12" fill="#64748b">interrupt 人工审批</text>
+
+    <rect x="836" y="176" width="150" height="74" rx="11" fill="#ffffff" stroke="#a78bfa"/>
+    <text x="911" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="#4c1d95">Executor</text>
+    <text x="911" y="232" text-anchor="middle" font-size="12" fill="#64748b">确定性执行</text>
+
+    <rect x="1024" y="176" width="96" height="74" rx="11" fill="#ffffff" stroke="#a78bfa"/>
+    <text x="1072" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="#4c1d95">Finalizer</text>
+    <text x="1072" y="232" text-anchor="middle" font-size="12" fill="#64748b">生成报告</text>
+
+    <rect x="836" y="292" width="150" height="68" rx="11" fill="#ffffff" stroke="#a78bfa"/>
+    <text x="911" y="322" text-anchor="middle" font-size="17" font-weight="700" fill="#4c1d95">Replanner</text>
+    <text x="911" y="344" text-anchor="middle" font-size="12" fill="#64748b">替换剩余失败步骤</text>
+  </g>
+
+  <g stroke="#64748b" stroke-width="2.2" fill="none">
+    <line x1="610" y1="213" x2="644" y2="213" marker-end="url(#arrow)"/>
+    <line x1="798" y1="213" x2="832" y2="213" marker-end="url(#arrow)"/>
+    <line x1="986" y1="213" x2="1020" y2="213" marker-end="url(#arrow)"/>
+    <line x1="911" y1="250" x2="911" y2="288" marker-end="url(#arrow)"/>
+    <path d="M836 326 H 790 V 213 H 832" marker-end="url(#arrow)"/>
+  </g>
+  <text x="738" y="320" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" fill="#64748b">修正后重跑</text>
+  <text x="742" y="268" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" fill="#64748b">步骤失败</text>
+
+  <!-- Tools -->
+  <rect x="434" y="424" width="420" height="104" rx="14" fill="url(#tool)" stroke="#fdba74" filter="url(#shadow)"/>
+  <text x="458" y="458" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#9a3412">确定性工具层</text>
+  <text x="458" y="486" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="13" fill="#334155">物性查询 · 摩尔质量 · 物料衡算 · 显热负荷 · LMTD</text>
+  <text x="458" y="508" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="13" fill="#334155">管径 · 流速 · 泵功率 · 理想气体 · 单位换算</text>
+
+  <!-- SQLite -->
+  <rect x="884" y="424" width="256" height="104" rx="14" fill="url(#db)" stroke="#94a3b8" filter="url(#shadow)"/>
+  <text x="908" y="458" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#0f172a">SQLite</text>
+  <text x="908" y="486" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="13" fill="#334155">runs / steps / events</text>
+  <text x="908" y="508" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="13" fill="#334155">LangGraph checkpoints</text>
+
+  <line x1="880" y1="380" x2="880" y2="420" stroke="#64748b" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <line x1="760" y1="380" x2="700" y2="420" stroke="#64748b" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <line x1="1012" y1="380" x2="1012" y2="420" stroke="#64748b" stroke-width="2.2" marker-end="url(#arrow)"/>
+
+  <!-- Bottom note -->
+  <rect x="60" y="584" width="1080" height="88" rx="14" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="88" y="620" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" font-weight="700" fill="#0f172a">关键约束</text>
+  <text x="88" y="648" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#475569">每一步必须绑定真实工具 · 模型不得编造物性 · 计划经人工批准才执行 · 失败只替换剩余步骤 · 报告只能引用实际结果</text>
+</svg>

@@ -17,6 +17,14 @@
   <b>LLM 制定计划 → 人工审批 → 确定性工具执行 → 失败自动重规划 → 可追溯报告</b>
 </p>
 
+<p align="center">
+  <a href="https://huhy666.github.io/chemical-process-calculation/"><b>🌐 在线项目介绍页</b></a>
+  ·
+  <a href="https://huhy666.github.io/chemical-process-calculation/#video"><b>▶ 演示视频</b></a>
+  ·
+  <a href="https://github.com/Huhy666/chemical-process-calculation"><b>💻 源码</b></a>
+</p>
+
 一个可演示、可检查、可扩展的化工工艺计算 Agent Demo。
 
 它刻意把“聪明”和“可靠”分开：**LLM 只负责规划与总结，所有数值计算都由本地确定性工具完成**。每一步计划都绑定真实工具，参数经 Pydantic 校验，结果落库可追溯。
@@ -33,6 +41,20 @@
 - **LLM 可切换**：Mock（离线）、DeepSeek、Claude 共用同一套适配接口。
 
 ---
+
+## 项目介绍页与演示视频
+
+面向非技术读者的项目介绍页部署在 GitHub Pages：
+
+**<https://huhy666.github.io/chemical-process-calculation/>**
+
+页面包含项目背景、价值对比、工作流程、架构图、真实案例、技术栈与启动方式，并预留了演示视频位置。
+
+上传演示视频：
+
+1. 把 MP4 文件放到 `docs/assets/demo-video.mp4`（文件名保持一致即可自动播放）；
+2. 也可以把 `docs/index.html` 中的 `<video>` 替换为 B 站 / 腾讯视频 iframe；
+3. 提交并推送后，GitHub Actions 会自动重新部署介绍页。
 
 ## 工作流程
 

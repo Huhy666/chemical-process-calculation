@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="演示视频">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#080e1a"/>
+      <stop offset="55%" stop-color="#0f2450"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="play" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1060" cy="120" r="300" fill="url(#glow)"/>
+  <circle cx="180" cy="620" r="260" fill="#2563eb" opacity="0.12"/>
+
+  <g opacity="0.18" stroke="#93c5fd" stroke-width="1">
+    <path d="M0 120H1280M0 240H1280M0 360H1280M0 480H1280M0 600H1280"/>
+    <path d="M160 0V720M320 0V720M480 0V720M640 0V720M800 0V720M960 0V720M1120 0V720"/>
+  </g>
+
+  <circle cx="640" cy="300" r="86" fill="#ffffff" opacity="0.10"/>
+  <circle cx="640" cy="300" r="64" fill="url(#play)"/>
+  <path d="M622 270l54 30-54 30z" fill="#07111f"/>
+
+  <text x="640" y="448" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif"
+        font-size="44" font-weight="700" fill="#ffffff">演示视频</text>
+  <text x="640" y="494" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif"
+        font-size="22" fill="#cbd5e1">从计划审批到确定性计算，完整走一遍</text>
+  <text x="640" y="560" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif"
+        font-size="16" fill="#93c5fd">化工工艺计算 Agent · Plan &amp; Execute</text>
+</svg>

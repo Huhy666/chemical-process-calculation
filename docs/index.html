@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>化工工艺计算 Agent · Plan &amp; Execute Demo</title>
+  <meta name="description" content="基于 LangGraph 的化工工艺计算 Agent：LLM 制定计划，人工审批，确定性工具执行，失败自动重规划，生成可追溯报告。">
+  <meta property="og:title" content="化工工艺计算 Agent · Plan & Execute Demo">
+  <meta property="og:description" content="把化工计算从黑盒对话变成可审批、可追溯的执行计划。">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #070d18;
+      --bg-soft: #0c1526;
+      --panel: rgba(17, 28, 48, 0.72);
+      --panel-solid: #101b30;
+      --border: rgba(148, 178, 220, 0.16);
+      --border-strong: rgba(148, 178, 220, 0.28);
+      --text: #e8eefc;
+      --muted: #9fb0ca;
+      --faint: #6d7f9c;
+      --cyan: #38bdf8;
+      --blue: #3b82f6;
+      --violet: #a78bfa;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --radius: 18px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    code, pre {
+      font-family: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+    }
+    .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    /* ---------- nav ---------- */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(7, 13, 24, 0.78);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 66px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .brand img { width: 30px; height: 30px; }
+    .brand span { font-size: 15px; }
+    .nav-links {
+      display: flex;
+      gap: 26px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      font-size: 13.5px;
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+    .nav-cta:hover { background: rgba(56, 189, 248, 0.12); border-color: var(--cyan); }
+
+    /* ---------- hero ---------- */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 84px 0 70px;
+      background:
+        radial-gradient(900px 460px at 78% -8%, rgba(56, 189, 248, 0.16), transparent 62%),
+        radial-gradient(760px 420px at 12% 18%, rgba(59, 130, 246, 0.14), transparent 60%),
+        linear-gradient(rgba(148, 178, 220, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 178, 220, 0.045) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 130px;
+      background: linear-gradient(transparent, var(--bg));
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: 56px;
+      align-items: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1px solid rgba(56, 189, 248, 0.32);
+      background: rgba(56, 189, 248, 0.08);
+      color: #9bdcff;
+      border-radius: 999px;
+      font-size: 12.5px;
+      letter-spacing: 0.4px;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+    }
+    h1 {
+      margin: 22px 0 18px;
+      font-size: clamp(2.15rem, 4.4vw, 3.55rem);
+      line-height: 1.16;
+      letter-spacing: -1.2px;
+      font-weight: 750;
+    }
+    .grad {
+      background: linear-gradient(92deg, #7dd3fc 0%, #60a5fa 48%, #c4b5fd 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .lede {
+      margin: 0 0 30px;
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 560px;
+    }
+    .lede b { color: var(--text); font-weight: 600; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 14px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 22px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      font-weight: 650;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+      color: #06101f;
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.22);
+    }
+    .btn-primary:hover { box-shadow: 0 16px 38px rgba(56, 189, 248, 0.32); }
+    .btn-ghost {
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .btn-ghost:hover { border-color: var(--cyan); background: rgba(56, 189, 248, 0.08); }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 28px;
+      font-size: 13px;
+      color: var(--faint);
+    }
+    .hero-meta span { display: inline-flex; align-items: center; gap: 7px; }
+    .tick { color: var(--green); }
+
+    /* ---------- mock app ---------- */
+    .mock {
+      position: relative;
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      background: linear-gradient(160deg, rgba(22, 37, 63, 0.94), rgba(10, 18, 33, 0.98));
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      transform: perspective(1200px) rotateY(-3deg) rotateX(1.5deg);
+    }
+    .mock::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(130deg, rgba(56, 189, 248, 0.4), transparent 38%, transparent 68%, rgba(167, 139, 250, 0.32));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      padding: 1px;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+    .mock-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .mock-bar i {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #334155; display: block;
+    }
+    .mock-bar i:nth-child(1) { background: #f87171; }
+    .mock-bar i:nth-child(2) { background: #fbbf24; }
+    .mock-bar i:nth-child(3) { background: #34d399; }
+    .mock-bar span {
+      margin-left: 10px;
+      font-size: 11.5px;
+      color: var(--faint);
+      letter-spacing: 0.3px;
+    }
+    .mock-body { padding: 20px; }
+    .mock-q {
+      font-size: 12.5px;
+      color: var(--muted);
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.025);
+      line-height: 1.5;
+    }
+    .mock-q b { color: #cfe6ff; font-weight: 600; }
+    .mock-label {
+      margin: 18px 0 9px;
+      font-size: 10.5px;
+      letter-spacing: 1.2px;
+      color: var(--faint);
+      text-transform: uppercase;
+    }
+    .mock-step {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.025);
+      font-size: 12.5px;
+    }
+    .mock-step .left { display: flex; align-items: center; gap: 9px; }
+    .mock-step .s {
+      font-size: 10px;
+      color: var(--faint);
+      width: 20px;
+      text-align: center;
+    }
+    .mock-step .val { color: #9bdcff; font-size: 11.5px; }
+    .mock-step.done .mark { color: var(--green); }
+    .mock-step.active {
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(56, 189, 248, 0.09);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 8px 24px rgba(56, 189, 248, 0.1);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    .mock-step.active .mark { color: var(--cyan); }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 8px 24px rgba(56, 189, 248, 0.08); }
+      50% { box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.34), 0 10px 34px rgba(56, 189, 248, 0.18); }
+    }
+    .mock-approve {
+      margin-top: 14px;
+      padding: 11px;
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 650;
+      color: #06101f;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+    }
+    .mock-foot {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      font-size: 10.5px;
+      color: var(--faint);
+    }
+
+    /* ---------- stats ---------- */
+    .stats {
+      position: relative;
+      z-index: 2;
+      margin-top: -26px;
+      padding-bottom: 10px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--border);
+    }
+    .stat {
+      padding: 24px 22px;
+      background: #0b1424;
+    }
+    .stat strong {
+      display: block;
+      font-size: 27px;
+      letter-spacing: -0.6px;
+      color: #dff1ff;
+    }
+    .stat span { font-size: 12.5px; color: var(--faint); }
+
+    /* ---------- sections ---------- */
+    section { padding: 92px 0; }
+    .section-head { max-width: 720px; margin-bottom: 44px; }
+    .kicker {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      font-weight: 650;
+    }
+    h2 {
+      margin: 12px 0 14px;
+      font-size: clamp(1.7rem, 3vw, 2.35rem);
+      line-height: 1.25;
+      letter-spacing: -0.7px;
+    }
+    .section-head p { margin: 0; color: var(--muted); font-size: 15.5px; }
+
+    /* compare */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .compare-card {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+    .compare-card.bad { border-color: rgba(248, 113, 113, 0.22); }
+    .compare-card.good {
+      border-color: rgba(56, 189, 248, 0.32);
+      background: linear-gradient(160deg, rgba(56, 189, 248, 0.09), rgba(15, 27, 48, 0.85));
+    }
+    .compare-card h3 { margin: 0 0 16px; font-size: 16.5px; }
+    .compare-card ul { margin: 0; padding: 0; list-style: none; }
+    .compare-card li {
+      display: flex;
+      gap: 10px;
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 14px;
+      border-bottom: 1px dashed rgba(148, 178, 220, 0.1);
+    }
+    .compare-card li:last-child { border-bottom: 0; }
+    .compare-card li .ic { flex: none; width: 18px; }
+    .bad .ic { color: #f87171; }
+    .good .ic { color: var(--green); }
+
+    /* flow */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      counter-reset: step;
+    }
+    .flow-card {
+      position: relative;
+      padding: 26px 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+    .flow-card::after {
+      content: "→";
+      position: absolute;
+      right: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--faint);
+      font-size: 18px;
+    }
+    .flow-card:last-child::after { display: none; }
+    .flow-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      color: #9bdcff;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .flow-card h3 { margin: 0 0 7px; font-size: 15px; }
+    .flow-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+    /* architecture */
+    .arch-card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+    }
+    .arch-card img { border-radius: 12px; background: #fff; }
+    .arch-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 6px 2px;
+      font-size: 12.5px;
+      color: var(--faint);
+    }
+
+    /* features */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .feature {
+      padding: 26px 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .feature:hover { transform: translateY(-3px); border-color: rgba(56, 189, 248, 0.3); }
+    .feature .ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px; height: 38px;
+      border-radius: 11px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      font-size: 17px;
+      margin-bottom: 15px;
+    }
+    .feature h3 { margin: 0 0 8px; font-size: 15.5px; }
+    .feature p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+    /* case */
+    .case-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: start;
+    }
+    .case-card {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+    .case-q {
+      padding: 14px 16px;
+      border-left: 3px solid var(--cyan);
+      background: rgba(56, 189, 248, 0.07);
+      border-radius: 0 10px 10px 0;
+      color: #d7e9ff;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid rgba(148, 178, 220, 0.12); }
+    th { color: var(--faint); font-weight: 600; font-size: 11.5px; letter-spacing: 0.8px; text-transform: uppercase; }
+    td { color: var(--muted); }
+    td strong { color: #dff1ff; }
+    .result-stack { display: grid; gap: 14px; }
+    .result {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(150deg, rgba(56, 189, 248, 0.09), rgba(16, 27, 48, 0.9));
+    }
+    .result span { display: block; font-size: 12px; color: var(--faint); margin-bottom: 4px; }
+    .result strong { font-size: 28px; letter-spacing: -0.8px; color: #dff1ff; }
+    .result em { font-style: normal; font-size: 13px; color: var(--muted); }
+
+    /* video */
+    .video-wrap { max-width: 960px; margin: 0 auto; }
+    .video-shell {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      overflow: hidden;
+      background: #060b14;
+      box-shadow: 0 34px 80px rgba(0, 0, 0, 0.42);
+    }
+    .video-shell video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .video-shell iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .video-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: rgba(6, 11, 20, 0.82);
+      backdrop-filter: blur(4px);
+      padding: 24px;
+    }
+    .video-fallback[hidden] { display: none; }
+    .video-fallback h3 { margin: 14px 0 6px; font-size: 19px; }
+    .video-fallback p { margin: 4px 0; color: var(--muted); font-size: 13.5px; }
+    .video-fallback code {
+      color: #9bdcff;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 12.5px;
+    }
+    .play-ring {
+      width: 58px; height: 58px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+      color: #06101f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      padding-left: 4px;
+    }
+    .video-note {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12.5px;
+      color: var(--faint);
+    }
+
+    /* stack */
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      padding: 9px 16px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .chip b { color: var(--text); font-weight: 600; }
+
+    /* quick start */
+    .start-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 26px;
+      align-items: center;
+    }
+    .start-list { margin: 0; padding: 0; list-style: none; }
+    .start-list li {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .start-list .n {
+      flex: none;
+      width: 24px; height: 24px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      color: #9bdcff;
+      font-size: 11.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .code-card {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #080f1c;
+    }
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11.5px;
+      color: var(--faint);
+      letter-spacing: 0.5px;
+    }
+    .copy-btn {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      border-radius: 7px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--cyan); }
+    pre {
+      margin: 0;
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 12.5px;
+      line-height: 1.85;
+      color: #c7d6ec;
+    }
+    pre .c { color: #5d7391; }
+    pre .g { color: #7dd3a8; }
+
+    /* footer */
+    footer {
+      padding: 42px 0 54px;
+      border-top: 1px solid var(--border);
+      color: var(--faint);
+      font-size: 13px;
+    }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .footer-inner a { color: var(--muted); }
+    .footer-inner a:hover { color: var(--cyan); }
+
+    /* reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* responsive */
+    @media (max-width: 980px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 44px; }
+      .mock { transform: none; max-width: 620px; }
+      .features { grid-template-columns: 1fr 1fr; }
+      .case-grid { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr 1fr; }
+      .flow-card:nth-child(2)::after { display: none; }
+      .start-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+      .hero { padding-top: 58px; }
+      section { padding: 70px 0; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .compare { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-card::after { display: none; }
+      .arch-caption { flex-direction: column; gap: 4px; }
+      .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top">
+      <img src="assets/favicon.svg" alt="">
+      <span>化工工艺计算 Agent</span>
+    </a>
+    <div class="nav-links">
+      <a href="#why">为什么</a>
+      <a href="#flow">流程</a>
+      <a href="#architecture">架构</a>
+      <a href="#case">案例</a>
+      <a href="#video">演示视频</a>
+    </div>
+    <a class="nav-cta" href="https://github.com/Huhy666/chemical-process-calculation" target="_blank" rel="noopener">
+      GitHub ↗
+    </a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow"><i class="dot"></i> LangGraph · Plan &amp; Execute Demo</span>
+      <h1>把化工计算，从黑盒对话变成<span class="grad">可审批的执行计划</span></h1>
+      <p class="lede">
+        LLM 制定计划，人把关，<b>确定性工具负责计算</b>。每一步都有输入、输出、失败恢复路径，
+        最终报告只能引用真实计算结果。
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#video">▶ 观看演示</a>
+        <a class="btn btn-ghost" href="https://github.com/Huhy666/chemical-process-calculation" target="_blank" rel="noopener">查看源码</a>
+      </div>
+      <div class="hero-meta">
+        <span><span class="tick">✓</span> 人工审批后才执行</span>
+        <span><span class="tick">✓</span> 数值计算 100% 工具化</span>
+        <span><span class="tick">✓</span> 失败自动重规划</span>
+      </div>
+    </div>
+
+    <div class="mock" aria-hidden="true">
+      <div class="mock-bar"><i></i><i></i><i></i><span>化工工艺计算 Agent · 运行中</span></div>
+      <div class="mock-body">
+        <div class="mock-q">将 2.5 m³/h 的甲醇从 25°C 加热到 60°C，热源为 120°C 饱和蒸汽，<b>K=600 W/(m²·K)</b>，求换热面积。</div>
+        <div class="mock-label">执行计划 · 待审批</div>
+        <div class="mock-step done">
+          <div class="left"><span class="s">s1</span><span class="mark">✓</span> 查询甲醇物性</div>
+          <span class="val">792 kg/m³</span>
+        </div>
+        <div class="mock-step done">
+          <div class="left"><span class="s">s2</span><span class="mark">✓</span> 计算显热负荷</div>
+          <span class="val">48.70 kW</span>
+        </div>
+        <div class="mock-step active">
+          <div class="left"><span class="s">s3</span><span class="mark">●</span> 估算换热面积</div>
+          <span class="val">1.46 m²</span>
+        </div>
+        <div class="mock-approve">✅ 批准并执行</div>
+        <div class="mock-foot"><span>确定性工具执行</span><span>过程全程落库</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="container">
+    <div class="stats-grid reveal">
+      <div class="stat"><strong>11</strong><span>确定性化工工具</span></div>
+      <div class="stat"><strong>27</strong><span>自动化测试通过</span></div>
+      <div class="stat"><strong>2</strong><span>失败自动重规划上限</span></div>
+      <div class="stat"><strong>100%</strong><span>步骤与结果可追溯</span></div>
+    </div>
+  </div>
+</div>
+
+<section id="why">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Why this demo</div>
+      <h2>直接让大模型算化工题，问题不在“算得对不对”</h2>
+      <p>而在于：你无法复核它用了什么假设、哪来的物性、中间步骤是否可信。这个 Demo 把过程和结果拆开管理。</p>
+    </div>
+    <div class="compare">
+      <div class="compare-card bad reveal">
+        <h3>传统“黑盒对话”</h3>
+        <ul>
+          <li><span class="ic">✕</span> 模型直接给出最终数字，中间过程不可见</li>
+          <li><span class="ic">✕</span> 物性参数可能被编造或混用单位</li>
+          <li><span class="ic">✕</span> 无法规定“先审批、再执行”</li>
+          <li><span class="ic">✕</span> 算错了只能重新提问，难以定位原因</li>
+          <li><span class="ic">✕</span> 结果无法作为工程记录留存</li>
+        </ul>
+      </div>
+      <div class="compare-card good reveal">
+        <h3>Plan &amp; Execute Agent</h3>
+        <ul>
+          <li><span class="ic">✓</span> 先出结构化计划，逐步展示工具与参数</li>
+          <li><span class="ic">✓</span> 物性、衡算、传热全部由确定性工具完成</li>
+          <li><span class="ic">✓</span> 计划经人工批准后才进入执行</li>
+          <li><span class="ic">✓</span> 失败只替换剩余步骤，已成功结果保留</li>
+          <li><span class="ic">✓</span> 每次运行、每一步结果都落库可追溯</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">How it works</div>
+      <h2>四步完成一次可信的化工计算</h2>
+      <p>LLM 只负责“想清楚要算什么”，执行与校核交给工具和人。</p>
+    </div>
+    <div class="flow">
+      <div class="flow-card reveal">
+        <div class="flow-num">01</div>
+        <h3>Planner 拆解问题</h3>
+        <p>读取工具目录，把自然语言问题转成 1~8 步结构化计划，明确每步工具、参数与预期产出。</p>
+      </div>
+      <div class="flow-card reveal">
+        <div class="flow-num">02</div>
+        <h3>人工审批</h3>
+        <p>计划在界面中完整展开。批准后执行；不合理可填写意见驳回，Agent 重新规划。</p>
+      </div>
+      <div class="flow-card reveal">
+        <div class="flow-num">03</div>
+        <h3>Executor 执行</h3>
+        <p>解析步骤间引用，校验参数，调用确定性工具。步骤失败时触发 Replanner，只替换剩余步骤。</p>
+      </div>
+      <div class="flow-card reveal">
+        <div class="flow-num">04</div>
+        <h3>Finalizer 汇总</h3>
+        <p>基于实际计算结果生成报告，标注步骤来源、计算方法和假设，不复述模型猜测。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Architecture</div>
+      <h2>LLM、执行器、工具三者边界清晰</h2>
+      <p>LangGraph 管状态与人工审批，FastAPI 管接口，SQLite 管事实，工具层只做纯计算。</p>
+    </div>
+    <div class="arch-card reveal">
+      <img src="assets/architecture.svg" alt="系统架构图">
+      <div class="arch-caption">
+        <span>Streamlit UI → FastAPI → LangGraph → 确定性工具层 / SQLite / LLM 适配层</span>
+        <span>Plan · Approve · Execute · Replan · Report</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Capabilities</div>
+      <h2>为工程场景设计的六个关键能力</h2>
+      <p>每一条都对应代码中的明确约束，而不是提示词里的“请务必”。</p>
+    </div>
+    <div class="features">
+      <div class="feature reveal">
+        <div class="ico">🛡️</div>
+        <h3>审批中断可恢复</h3>
+        <p>基于 LangGraph interrupt + SQLite checkpointer，计划生成后暂停，批准才继续；刷新页面也能恢复。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ico">⚙️</div>
+        <h3>确定性执行</h3>
+        <p>执行器是纯代码：Pydantic 校验参数，只允许调用注册工具，模型不参与单步数值计算。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ico">🔗</div>
+        <h3>步骤间结果引用</h3>
+        <p>支持 <code>${s1.density_kg_m3}</code> 形式的引用，自动把前序结果传给后续工具，避免模型“手填中间值”。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ico">🔁</div>
+        <h3>失败自动重规划</h3>
+        <p>某一步失败时，只替换剩余步骤，已成功结果保留；重规划有次数上限，防止无限循环。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ico">📊</div>
+        <h3>全过程可观测</h3>
+        <p>runs / steps / events 三张表记录状态、参数、结果与事件，前端时间线可完整复盘。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ico">🔌</div>
+        <h3>模型可切换</h3>
+        <p>Mock、DeepSeek、Claude 共用同一适配接口。离线演示、国内直连、海外模型都能跑。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="case">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Real case</div>
+      <h2>一个真实跑通的化工计算案例</h2>
+      <p>问题不在内置示例中，由 DeepSeek 现场规划并执行。</p>
+    </div>
+    <div class="case-grid">
+      <div class="case-card reveal">
+        <div class="case-q">
+          将 2.5 m³/h 的甲醇从 25°C 加热到 60°C，热源为 100°C 饱和蒸汽，
+          总传热系数 K=600 W/(m²·K)，求所需换热面积。
+        </div>
+        <table>
+          <thead>
+            <tr><th>步骤</th><th>工具</th><th>关键结果</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>s1</td><td>物性查询</td><td>密度 792 kg/m³ · 比热 2.53 kJ/(kg·K)</td></tr>
+            <tr><td>s2</td><td>显热负荷</td><td>质量流量 1980 kg/h · Q = <strong>48.70 kW</strong></td></tr>
+            <tr><td>s3</td><td>LMTD 换热面积</td><td>LMTD 55.68 K · A = <strong>1.46 m²</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="result-stack reveal">
+        <div class="result">
+          <span>换热量</span>
+          <strong>48.70 <em>kW</em></strong>
+        </div>
+        <div class="result">
+          <span>对数平均温差</span>
+          <strong>55.68 <em>K</em></strong>
+        </div>
+        <div class="result">
+          <span>所需换热面积</span>
+          <strong>1.46 <em>m²</em></strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="video">
+  <div class="container">
+    <div class="section-head reveal" style="text-align:center;margin-left:auto;margin-right:auto;">
+      <div class="kicker">Demo video</div>
+      <h2>完整演示：从计划审批到计算报告</h2>
+      <p>建议录制 2~5 分钟，覆盖输入问题、查看计划、批准执行、步骤时间线与最终报告。</p>
+    </div>
+    <div class="video-wrap reveal">
+      <!--
+        演示视频放置位置：
+        1) 把 MP4 文件放到 docs/assets/demo-video.mp4（文件名保持一致即可自动播放）
+        2) 或者把 <video> 整段替换成 B 站 / 腾讯视频 iframe，例如：
+           <iframe src="//player.bilibili.com/player.html?bvid=BVxxxxxxxxx" scrolling="no"
+                   border="0" frameborder="no" framespacing="0" allowfullscreen></iframe>
+           并为 .video-shell iframe 添加 width:100%;height:100%;border:0;
+      -->
+      <div class="video-shell" id="videoShell">
+        <video id="demoVideo" controls preload="metadata" poster="assets/video-poster.svg">
+          <source src="assets/demo-video.mp4" type="video/mp4">
+          你的浏览器不支持 HTML5 视频。
+        </video>
+        <div class="video-fallback" id="videoFallback" hidden>
+          <div>
+            <div class="play-ring">▶</div>
+            <h3>演示视频待上传</h3>
+            <p>把视频放到 <code>docs/assets/demo-video.mp4</code>，刷新页面即可播放。</p>
+            <p>也可以替换为 B 站 / 腾讯视频 iframe。</p>
+          </div>
+        </div>
+      </div>
+      <div class="video-note">视频位置已预留 · 支持本地 MP4 或外部视频嵌入</div>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Tech stack</div>
+      <h2>技术栈</h2>
+      <p>全部开源、可本地部署，默认 Mock 模式无需任何 API Key 即可演示。</p>
+    </div>
+    <div class="chips reveal">
+      <span class="chip"><b>Python</b> 3.13</span>
+      <span class="chip"><b>LangGraph</b> 状态机 / interrupt</span>
+      <span class="chip"><b>FastAPI</b> 接口与后台任务</span>
+      <span class="chip"><b>Streamlit</b> UI</span>
+      <span class="chip"><b>SQLite</b> runs / steps / events</span>
+      <span class="chip"><b>Pydantic</b> 参数校验</span>
+      <span class="chip"><b>DeepSeek</b> / <b>Claude</b> / Mock</span>
+      <span class="chip"><b>pytest</b> 27 tests</span>
+      <span class="chip"><b>GitHub Actions</b> CI</span>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Quick start</div>
+      <h2>三分钟本地跑起来</h2>
+      <p>默认使用 Mock 模式，无需配置 API Key；接入真实模型只需修改 .env。</p>
+    </div>
+    <div class="start-grid">
+      <ul class="start-list reveal">
+        <li><span class="n">1</span>克隆仓库并创建虚拟环境</li>
+        <li><span class="n">2</span>安装 requirements.txt 依赖</li>
+        <li><span class="n">3</span>运行 run_demo.py，自动打开前端</li>
+        <li><span class="n">4</span>输入问题，审批计划，查看报告</li>
+      </ul>
+      <div class="code-card reveal">
+        <div class="code-head">
+          <span>TERMINAL</span>
+          <button class="copy-btn" data-copy="git clone git@github.com:Huhy666/chemical-process-calculation.git&#10;cd chemical-process-calculation&#10;python -m venv .venv&#10;.venv/Scripts/python.exe -m pip install -r requirements.txt&#10;.venv/Scripts/python.exe run_demo.py">复制</button>
+        </div>
+        <pre><span class="c"># clone &amp; install</span>
+git clone git@github.com:Huhy666/chemical-process-calculation.git
+cd chemical-process-calculation
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+
+<span class="c"># run backend + frontend, then open browser</span>
+<span class="g">.venv/Scripts/python.exe run_demo.py</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <div>
+      <strong style="color:var(--text)">化工工艺计算 Agent</strong>
+      <span> · Plan &amp; Execute Demo · MIT License © 2026 Huhy666</span>
+    </div>
+    <div>
+      <a href="https://github.com/Huhy666/chemical-process-calculation" target="_blank" rel="noopener">GitHub 仓库</a>
+      <span> · </span>
+      <a href="https://github.com/Huhy666/chemical-process-calculation/blob/main/docs/design.md" target="_blank" rel="noopener">设计说明</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // reveal on scroll
+  const revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach((el) => io.observe(el));
+  } else {
+    revealEls.forEach((el) => el.classList.add('visible'));
+  }
+
+  // copy quick start
+  document.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const text = btn.getAttribute('data-copy') || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = '已复制';
+        setTimeout(() => { btn.textContent = old; }, 1500);
+      } catch (e) {
+        btn.textContent = '复制失败';
+      }
+    });
+  });
+
+  // graceful video fallback when the mp4 has not been uploaded yet
+  const video = document.getElementById('demoVideo');
+  const fallback = document.getElementById('videoFallback');
+  function showVideoFallback() { fallback.hidden = false; }
+  if (video) {
+    const source = video.querySelector('source');
+    if (source) source.addEventListener('error', showVideoFallback);
+    video.addEventListener('error', showVideoFallback);
+    fetch('assets/demo-video.mp4', { method: 'HEAD' })
+      .then((res) => { if (!res.ok) showVideoFallback(); })
+      .catch(showVideoFallback);
+  }
+</script>
+</body>
+</html>
