@@ -40,25 +40,9 @@
 
 ---
 
-## 独立项目介绍页与演示视频
 
-面向非技术读者的独立静态介绍页位于 `docs/index.html`，不依赖 Streamlit，也不依赖 GitHub Pages。
-它可以用任意静态托管方式发布：Netlify、Cloudflare Pages、Nginx、本地 HTTP 服务或内网穿透隧道。
-
-本地预览：
-
-```bash
-python -m http.server 8601 --directory docs
-# 打开 http://127.0.0.1:8601
 ```
 
-上传演示视频：
-
-1. 把 MP4 文件放到 `docs/assets/demo-video.mp4`（文件名一致即可自动播放）；
-2. 也可以把 `docs/index.html` 中的 `<video>` 替换为 B 站 / 腾讯视频 iframe；
-3. 重新部署 `docs/` 目录即可生效。
-
-> 本地演示视频文件已加入 `.gitignore`，避免大文件进入 Git 历史；部署静态站时直接上传整个 `docs/` 目录即可包含视频。
 
 ## 工作流程
 
